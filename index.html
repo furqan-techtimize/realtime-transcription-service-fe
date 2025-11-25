@@ -873,7 +873,7 @@
                 this.log('Connecting to WebSocket...', 'info');
                 
                 // Auto-detect environment (local vs production)
-                const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'ws://localhost:8766' : 'wss://your-backend-url.onrender.com';
+                const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'ws://localhost:8766' : 'wss://realtime-transcription-service.onrender.com';
                 this.ws = new WebSocket(WS_URL);
                 
                 this.ws.onopen = () => {
