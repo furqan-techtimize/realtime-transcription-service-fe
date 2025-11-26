@@ -1069,8 +1069,12 @@
 				connectWebSocket() {
 					this.log("Connecting to WebSocket...", "info")
 
-					const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'ws://localhost:8766' : 'wss://realtime-transcription-service.onrender.com';
-                	this.ws = new WebSocket(WS_URL);
+					const WS_URL =
+						window.location.hostname === "localhost" ||
+						window.location.hostname === "127.0.0.1"
+							? "ws://localhost:8766"
+							: "wss://realtime-transcription-service.onrender.com"
+					this.ws = new WebSocket(WS_URL)
 
 					this.ws.onopen = () => {
 						this.log("✅ WebSocket connected", "success")
@@ -2000,7 +2004,7 @@
 
 						// Wait a bit between tests
 						await new Promise((resolve) =>
-							setTimeout(resolve, 2000)
+							setTimeout(resolve, 3000)
 						)
 
 						// Test 2: Deepgram Nova-3 with diarization
@@ -2167,10 +2171,30 @@
 					// Wait for final results
 					await new Promise((resolve) => setTimeout(resolve, 3000))
 
-					// Send stop command
+					// Send stop command and wait for confirmation
+					const stopPromise = new Promise((resolve) => {
+						const originalHandler = this.handleMessage.bind(this)
+						this.handleMessage = (data) => {
+							originalHandler(data)
+							if (data.type === "transcription_stopped") {
+								this.handleMessage = originalHandler
+								resolve()
+							}
+						}
+					})
+
 					this.ws.send(
 						JSON.stringify({ command: "stop_transcription" })
 					)
+
+					// Wait for stop confirmation with timeout
+					await Promise.race([
+						stopPromise,
+						new Promise((resolve) => setTimeout(resolve, 2000)),
+					])
+
+					// Additional delay to ensure cleanup
+					await new Promise((resolve) => setTimeout(resolve, 500))
 
 					// Restore original callback
 					this.handleTranscription = originalCallback
